@@ -7,7 +7,9 @@
 	import FolderUp from '@lucide/svelte/icons/folder-up';
 	import Lock from '@lucide/svelte/icons/lock';
 	import Pencil from '@lucide/svelte/icons/pencil';
+	import Redo2 from '@lucide/svelte/icons/redo-2';
 	import Share2 from '@lucide/svelte/icons/share-2';
+	import Undo2 from '@lucide/svelte/icons/undo-2';
 	import { onDestroy } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { ApiError, api } from '#lib/api.js';
@@ -18,7 +20,7 @@
 	import { Button } from '#lib/components/ui/button/index.js';
 	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/index.js';
 	import { Skeleton } from '#lib/components/ui/skeleton/index.js';
-	import * as Tooltip from '#lib/components/ui/tooltip/index.js';
+	import { Separator } from '#lib/components/ui/separator/index.js';
 	import Editor from '#lib/components/editor/Editor.svelte';
 	import { live } from '#lib/live.svelte.js';
 	import { docHref, encodePath, findTrail } from '#lib/paths.js';
@@ -34,6 +36,8 @@
 	let draft = $state('');
 	let saving = $state(false);
 	let conflict = $state<{ currentHash: string | null } | null>(null);
+	let editor = $state<{ undo: () => void; redo: () => void }>();
+	let history = $state({ canUndo: false, canRedo: false });
 
 	const dirty = $derived(editing && doc !== null && draft !== doc.content);
 	const lock = $derived(live.locks[path]);
@@ -84,6 +88,7 @@
 		await load(path);
 		if (!doc) return;
 		draft = doc.content;
+		history = { canUndo: false, canRedo: false };
 		editing = true;
 	};
 
@@ -183,6 +188,15 @@
 
 	{#snippet actions()}
 		{#if editing}
+			<Button variant="ghost" size="icon" title="Undo" disabled={!history.canUndo} onclick={() => editor?.undo()}>
+				<Undo2 />
+				<span class="sr-only">Undo</span>
+			</Button>
+			<Button variant="ghost" size="icon" title="Redo" disabled={!history.canRedo} onclick={() => editor?.redo()}>
+				<Redo2 />
+				<span class="sr-only">Redo</span>
+			</Button>
+			<Separator orientation="vertical" class="mx-1 data-[orientation=vertical]:h-4" />
 			<Button variant="ghost" size="sm" onclick={close}>Close</Button>
 			<Button size="sm" disabled={!dirty || saving} onclick={() => save()}>
 				{saving ? 'Saving…' : 'Save'}
@@ -194,23 +208,6 @@
 					{lock.name} is editing
 				</Badge>
 			{/if}
-			{#if app.editMode && doc}
-				<Tooltip.Root>
-					<Tooltip.Trigger>
-						{#snippet child({ props })}
-							<span {...props}>
-								<Button variant="outline" size="sm" disabled={lockedByOther} onclick={startEditing}>
-									<Pencil />
-									Edit
-								</Button>
-							</span>
-						{/snippet}
-					</Tooltip.Trigger>
-					{#if lockedByOther}
-						<Tooltip.Content>{lock?.name} is editing this page</Tooltip.Content>
-					{/if}
-				</Tooltip.Root>
-			{/if}
 			<DropdownMenu.Root>
 				<DropdownMenu.Trigger>
 					{#snippet child({ props })}
@@ -221,6 +218,13 @@
 					{/snippet}
 				</DropdownMenu.Trigger>
 				<DropdownMenu.Content align="end" class="min-w-48">
+					{#if app.me.canEdit && doc}
+						<DropdownMenu.Item disabled={lockedByOther} onclick={startEditing}>
+							<Pencil />
+							{lockedByOther ? `${lock?.name || 'Someone'} is editing` : 'Edit page'}
+						</DropdownMenu.Item>
+						<DropdownMenu.Separator />
+					{/if}
 					{#if app.me.isAdmin && doc}
 						<DropdownMenu.Item onclick={() => doc && (dialogs.share = { path, title: doc.title })}>
 							<Share2 /> Share page
@@ -256,7 +260,7 @@
 			<Skeleton class="h-4 w-4/6" />
 		</div>
 	{:else if editing}
-		<Editor bind:value={draft} docPath={path} />
+		<Editor bind:this={editor} bind:value={draft} bind:history docPath={path} />
 	{:else}
 		<MarkdownView content={doc.content} docPath={path} />
 	{/if}

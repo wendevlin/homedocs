@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { Crepe } from '@milkdown/crepe';
 	import '@milkdown/crepe/theme/common/style.css';
-	import { remarkStringifyOptionsCtx } from '@milkdown/kit/core';
+	import { editorViewCtx, remarkStringifyOptionsCtx } from '@milkdown/kit/core';
 	import { imageSchema } from '@milkdown/kit/preset/commonmark';
+	import { redo, redoDepth, undo, undoDepth } from '@milkdown/kit/prose/history';
+	import type { EditorState } from '@milkdown/kit/prose/state';
 	import { insert } from '@milkdown/kit/utils';
 	import { onMount } from 'svelte';
 	import { resolveAssetUrl } from '#lib/markdown.js';
@@ -12,12 +14,18 @@
 		value,
 		docPath,
 		onchange,
+		onhistory
 	}: {
 		/** Initial markdown, later changes are reported through `onchange` */
 		value: string;
 		docPath: string;
 		onchange: (markdown: string) => void;
+		/** Reports whether there is something to undo or redo */
+		onhistory?: (history: { canUndo: boolean; canRedo: boolean }) => void;
 	} = $props();
+
+	const reportHistory = (state: EditorState) =>
+		onhistory?.({ canUndo: undoDepth(state) > 0, canRedo: redoDepth(state) > 0 });
 
 	let root: HTMLDivElement;
 	let crepe: Crepe | null = null;
@@ -65,13 +73,29 @@
 			})
 		);
 		instance.editor.use(emojiPlugin);
-		instance.on((listener) => listener.markdownUpdated((_, markdown) => onchange(markdown)));
+		instance.on((listener) =>
+			listener.markdownUpdated((ctx, markdown) => {
+				onchange(markdown);
+				reportHistory(ctx.get(editorViewCtx).state);
+			})
+		);
 		instance.create().then(() => (crepe = instance));
 		return () => {
 			crepe = null;
 			instance.destroy();
 		};
 	});
+
+	/** Runs a ProseMirror command on the editor and gives the focus back to it. */
+	const run = (command: typeof undo) =>
+		crepe?.editor.action((ctx) => {
+			const view = ctx.get(editorViewCtx);
+			command(view.state, view.dispatch);
+			view.focus();
+		});
+
+	export const undoChange = () => run(undo);
+	export const redoChange = () => run(redo);
 
 	export const insertMarkdown = (markdown: string) => {
 		crepe?.editor.action(insert(markdown));
