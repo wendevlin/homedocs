@@ -1,0 +1,3 @@
+# Homedocs holds private documentation, nothing here should be indexed
+User-agent: *
+Disallow: /

@@ -1,0 +1,6 @@
+**/node_modules
+.dev
+.git
+.claude
+packages/web/build
+packages/web/.svelte-kit

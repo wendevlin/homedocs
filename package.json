@@ -1,0 +1,17 @@
+{
+  "name": "homedocs",
+  "private": true,
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "dev": "bun run --filter server --filter web dev",
+    "dev:ingress": "bun run build && TRUSTED_PROXY_IP=127.0.0.1 DOCS_ROOT=.dev/docs DATA_DIR=.dev/data bun packages/server/src/index.ts",
+    "ingress-proxy": "bun scripts/ingress-proxy.ts",
+    "build": "bun run --filter web --filter server build",
+    "start": "bun packages/server/src/index.ts",
+    "test": "bun test packages/server",
+    "typecheck": "bun run --filter server --filter web typecheck"
+  },
+  "devDependencies": {
+    "@types/bun": "1.4.2"
+  }
+}
