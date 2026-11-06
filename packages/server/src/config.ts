@@ -39,9 +39,10 @@ export const config = {
 	legacyDocsRoot: resolve(env.LEGACY_DOCS_ROOT ?? '/homeassistant/homedocs'),
 	/**
 	 * How users find `docsRoot` (Samba, Studio Code Server): `/addon_configs/<repo>_<slug>`.
-	 * The container hostname is `<repo>-<slug>`.
+	 * The container hostname is `<repo>-<slug>` with every `_` turned into `-` (the repo part is a
+	 * hash or `local`), e.g. `a0d7b954-homedocs-beta` for `/addon_configs/a0d7b954_homedocs_beta`.
 	 */
-	userDocsPath: env.HOSTNAME?.includes('-') ? `/addon_configs/${env.HOSTNAME.replace('-', '_')}` : 'the app configuration folder',
+	userDocsPath: env.HOSTNAME?.includes('-') ? `/addon_configs/${env.HOSTNAME.replaceAll('-', '_')}` : 'the app configuration folder',
 	dataDir,
 	webDir: resolve(env.WEB_DIR ?? resolve(import.meta.dir, '../../web/build')),
 	sampleDocsDir: resolve(env.SAMPLE_DOCS_DIR ?? resolve(import.meta.dir, '../../../sample-docs')),
