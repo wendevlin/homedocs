@@ -39,8 +39,8 @@
 	const containsCurrent = $derived(node.type === 'folder' && currentPath.startsWith(`${node.path}/`));
 	const lock = $derived(docPath ? live.locks[docPath] : undefined);
 
-	/** A folder page without sub pages is shown like a file, except in edit mode (to add pages). */
-	const expandable = $derived(node.type === 'folder' && (node.children.length > 0 || !node.index || app.editMode));
+	/** A folder page without sub pages is shown like a file, except in sidebar edit mode (to add pages). */
+	const expandable = $derived(node.type === 'folder' && (node.children.length > 0 || !node.index || app.treeEditMode));
 
 	let open = $state(false);
 	$effect(() => {
@@ -51,7 +51,7 @@
 
 	$effect(() => {
 		const element = row;
-		if (!element || !app.editMode) return;
+		if (!element || !app.treeEditMode) return;
 		return combine(
 			draggable({
 				element,
@@ -105,7 +105,7 @@
 {/snippet}
 
 {#snippet actions()}
-	{#if app.editMode}
+	{#if app.treeEditMode}
 		<DropdownMenu.Root>
 			<DropdownMenu.Trigger>
 				{#snippet child({ props })}
@@ -156,13 +156,13 @@
 				class={[
 					'rounded-md',
 					instruction?.operation === 'combine' && 'ring-primary ring-2',
-					app.editMode && 'cursor-grab'
+					app.treeEditMode && 'cursor-grab'
 				]}
 			>
 				{#if node.index}
 					<Sidebar.MenuButton isActive={active}>
 						{#snippet child({ props })}
-							<a href={docHref(node.index!)} {...props} draggable={app.editMode ? false : undefined}>{@render label()}</a>
+							<a href={docHref(node.index!)} {...props} draggable={app.treeEditMode ? false : undefined}>{@render label()}</a>
 						{/snippet}
 					</Sidebar.MenuButton>
 				{:else}
@@ -197,10 +197,10 @@
 			{/if}
 		</Collapsible.Root>
 	{:else}
-		<div bind:this={row} class={[app.editMode && 'cursor-grab']}>
+		<div bind:this={row} class={[app.treeEditMode && 'cursor-grab']}>
 			<Sidebar.MenuButton isActive={active}>
 				{#snippet child({ props })}
-					<a href={docHref(node.path)} {...props} draggable={app.editMode ? false : undefined}>{@render label()}</a>
+					<a href={docHref(node.path)} {...props} draggable={app.treeEditMode ? false : undefined}>{@render label()}</a>
 				{/snippet}
 			</Sidebar.MenuButton>
 		</div>

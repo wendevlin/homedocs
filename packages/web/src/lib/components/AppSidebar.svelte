@@ -2,15 +2,19 @@
 	import { afterNavigate } from '$app/navigation';
 	import { monitorForElements } from '@atlaskit/pragmatic-drag-and-drop/element/adapter';
 	import { extractInstruction } from '@atlaskit/pragmatic-drag-and-drop-hitbox/list-item';
+	import Check from '@lucide/svelte/icons/check';
+	import EllipsisVertical from '@lucide/svelte/icons/ellipsis-vertical';
+	import FilePlus from '@lucide/svelte/icons/file-plus';
+	import FolderPlus from '@lucide/svelte/icons/folder-plus';
+	import Pencil from '@lucide/svelte/icons/pencil';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Share2 from '@lucide/svelte/icons/share-2';
 	import Users from '@lucide/svelte/icons/users';
 	import { app } from '#lib/app.svelte.js';
 	import logo from '#lib/assets/favicon.svg';
+	import { Button } from '#lib/components/ui/button/index.js';
 	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/index.js';
-	import { Label } from '#lib/components/ui/label/index.js';
 	import * as Sidebar from '#lib/components/ui/sidebar/index.js';
-	import { Switch } from '#lib/components/ui/switch/index.js';
 	import { live } from '#lib/live.svelte.js';
 	import { dialogs, moveInTree, type DragData } from '#lib/tree-actions.svelte.js';
 	import DeleteDialog from './tree/DeleteDialog.svelte';
@@ -46,26 +50,48 @@
 	</Sidebar.Header>
 	<Sidebar.Content>
 		<Sidebar.Group>
-			<Sidebar.GroupLabel>Pages</Sidebar.GroupLabel>
-			{#if app.editMode}
-				<DropdownMenu.Root>
-					<DropdownMenu.Trigger>
-						{#snippet child({ props })}
-							<Sidebar.GroupAction {...props} title="Add page or folder">
-								<Plus />
-								<span class="sr-only">Add page or folder</span>
-							</Sidebar.GroupAction>
-						{/snippet}
-					</DropdownMenu.Trigger>
-					<DropdownMenu.Content side="right" align="start">
-						<DropdownMenu.Item onclick={() => (dialogs.entry = { kind: 'file', parent: '' })}>
-							New page
-						</DropdownMenu.Item>
-						<DropdownMenu.Item onclick={() => (dialogs.entry = { kind: 'folder', parent: '' })}>
-							New folder
-						</DropdownMenu.Item>
-					</DropdownMenu.Content>
-				</DropdownMenu.Root>
+			<div class="flex items-center gap-1 pr-1">
+				<Sidebar.GroupLabel class="flex-1">Pages</Sidebar.GroupLabel>
+				{#if app.me.canEdit}
+					{#if app.treeEditMode}
+						<DropdownMenu.Root>
+							<DropdownMenu.Trigger>
+								{#snippet child({ props })}
+									<Button {...props} variant="ghost" size="icon-sm" class="size-7" title="Add page or folder">
+										<Plus />
+										<span class="sr-only">Add page or folder</span>
+									</Button>
+								{/snippet}
+							</DropdownMenu.Trigger>
+							<DropdownMenu.Content side="right" align="start">
+								<DropdownMenu.Item onclick={() => (dialogs.entry = { kind: 'file', parent: '' })}>
+									<FilePlus /> New page
+								</DropdownMenu.Item>
+								<DropdownMenu.Item onclick={() => (dialogs.entry = { kind: 'folder', parent: '' })}>
+									<FolderPlus /> New folder
+								</DropdownMenu.Item>
+							</DropdownMenu.Content>
+						</DropdownMenu.Root>
+						<Button variant="secondary" size="sm" class="h-7" onclick={() => (app.treeEditMode = false)}>
+							<Check /> Done
+						</Button>
+					{:else}
+						<Button
+							variant="ghost"
+							size="sm"
+							class="text-sidebar-foreground/70 h-7"
+							title="Add, rename, move or delete pages"
+							onclick={() => (app.treeEditMode = true)}
+						>
+							<Pencil /> Edit
+						</Button>
+					{/if}
+				{/if}
+			</div>
+			{#if app.treeEditMode}
+				<p class="text-muted-foreground px-2 pb-2 text-xs">
+					Drag pages to move them. Use <EllipsisVertical class="inline size-3 align-[-2px]" /> to rename or delete.
+				</p>
 			{/if}
 			<Sidebar.GroupContent>
 				<Sidebar.Menu>
@@ -102,16 +128,6 @@
 					</Sidebar.MenuButton>
 				</Sidebar.MenuItem>
 			</Sidebar.Menu>
-		{/if}
-		{#if app.me.canEdit}
-			<div class="flex items-center justify-between gap-2 px-2 py-1.5">
-				<Label for="edit-mode">Edit mode</Label>
-				<Switch
-					id="edit-mode"
-					checked={app.editMode}
-					onCheckedChange={(checked) => (app.editMode = checked)}
-				/>
-			</div>
 		{/if}
 		<div class="text-muted-foreground flex items-center gap-2 pl-2 text-xs">
 			<span

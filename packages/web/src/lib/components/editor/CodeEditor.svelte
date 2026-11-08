@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { redo, redoDepth, undo, undoDepth } from '@codemirror/commands';
 	import { markdown } from '@codemirror/lang-markdown';
 	import { languages } from '@codemirror/language-data';
 	import { Compartment } from '@codemirror/state';
@@ -9,7 +10,16 @@
 	import { splitFrontMatter } from '#lib/markdown.js';
 	import { emojiAutocomplete } from './emoji-codemirror';
 
-	let { value, onchange }: { value: string; onchange: (markdown: string) => void } = $props();
+	let {
+		value,
+		onchange,
+		onhistory
+	}: {
+		value: string;
+		onchange: (markdown: string) => void;
+		/** Reports whether there is something to undo or redo */
+		onhistory?: (history: { canUndo: boolean; canRedo: boolean }) => void;
+	} = $props();
 
 	let root: HTMLDivElement;
 	let view: EditorView | null = null;
@@ -36,7 +46,10 @@
 				baseTheme,
 				theme.of(mode.current === 'dark' ? oneDark : []),
 				EditorView.updateListener.of((update) => {
-					if (update.docChanged) onchange(update.state.doc.toString());
+					if (update.docChanged) {
+						onchange(update.state.doc.toString());
+						onhistory?.({ canUndo: undoDepth(update.state) > 0, canRedo: redoDepth(update.state) > 0 });
+					}
 					if (update.selectionSet && update.view.hasFocus) cursorPlaced = true;
 				})
 			]
@@ -51,6 +64,14 @@
 		const dark = mode.current === 'dark';
 		view?.dispatch({ effects: theme.reconfigure(dark ? oneDark : []) });
 	});
+
+	export const undoChange = () => {
+		if (view) undo(view);
+	};
+
+	export const redoChange = () => {
+		if (view) redo(view);
+	};
 
 	export const insertMarkdown = (text: string) => {
 		if (!view) return;

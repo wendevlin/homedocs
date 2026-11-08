@@ -12,7 +12,18 @@
 	type Mode = 'visual' | 'markdown';
 	const MODE_KEY = 'homedocs:editor-mode';
 
-	let { value = $bindable(), docPath }: { value: string; docPath: string } = $props();
+	type History = { canUndo: boolean; canRedo: boolean };
+	type EditorHandle = {
+		insertMarkdown: (markdown: string) => void;
+		undoChange: () => void;
+		redoChange: () => void;
+	};
+
+	let {
+		value = $bindable(),
+		docPath,
+		history = $bindable({ canUndo: false, canRedo: false })
+	}: { value: string; docPath: string; history?: History } = $props();
 
 	const readMode = (): Mode => {
 		try {
@@ -25,7 +36,11 @@
 	let mode = $state<Mode>(readMode());
 	let uploading = $state(false);
 	let fileInput: HTMLInputElement;
-	let editor = $state<{ insertMarkdown: (markdown: string) => void }>();
+	let editor = $state<EditorHandle>();
+
+	export const undo = () => editor?.undoChange();
+	export const redo = () => editor?.redoChange();
+	const onhistory = (next: History) => (history = next);
 
 	// The visual editor does not know front matter: it is kept aside and put back on every change.
 	let frontMatter = $state('');
@@ -46,6 +61,8 @@
 		if (next !== 'visual' && next !== 'markdown') return;
 		prepare(next);
 		mode = next;
+		// the other editor starts with an empty history
+		history = { canUndo: false, canRedo: false };
 		try {
 			localStorage.setItem(MODE_KEY, next);
 		} catch {
@@ -99,9 +116,10 @@
 					value={initial}
 					{docPath}
 					onchange={(markdown) => (value = joinFrontMatter(frontMatter, markdown))}
+					{onhistory}
 				/>
 			{:else}
-				<CodeEditor bind:this={editor} value={initial} onchange={(markdown) => (value = markdown)} />
+				<CodeEditor bind:this={editor} value={initial} onchange={(markdown) => (value = markdown)} {onhistory} />
 			{/if}
 		{/key}
 	</div>

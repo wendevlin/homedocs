@@ -3,11 +3,11 @@ import { api } from './api';
 import { live } from './live.svelte';
 import { collectDocPaths } from './paths';
 
-const EDIT_MODE_KEY = 'homedocs:edit-mode';
+const TREE_EDIT_MODE_KEY = 'homedocs:tree-edit-mode';
 
-const readEditMode = () => {
+const readTreeEditMode = () => {
 	try {
-		return localStorage.getItem(EDIT_MODE_KEY) === '1';
+		return localStorage.getItem(TREE_EDIT_MODE_KEY) === '1';
 	} catch {
 		return false;
 	}
@@ -18,21 +18,21 @@ class App {
 	tree = $state<TreeNode[]>([]);
 	loaded = $state(false);
 	error = $state<string | null>(null);
-	#editMode = $state(readEditMode());
+	#treeEditMode = $state(readTreeEditMode());
 
 	docPaths = $derived(collectDocPaths(this.tree));
 
-	/** Edit mode shows the tree editing tools and the edit button on pages. */
-	get editMode() {
-		return this.#editMode && this.me.canEdit;
+	/** Sidebar edit mode: add, rename, delete and drag pages in the tree. Pages are edited on their own. */
+	get treeEditMode() {
+		return this.#treeEditMode && this.me.canEdit;
 	}
 
-	set editMode(value: boolean) {
-		this.#editMode = value;
+	set treeEditMode(value: boolean) {
+		this.#treeEditMode = value;
 		try {
-			localStorage.setItem(EDIT_MODE_KEY, value ? '1' : '0');
+			localStorage.setItem(TREE_EDIT_MODE_KEY, value ? '1' : '0');
 		} catch {
-			// private mode etc., edit mode is just not remembered
+			// private mode etc., the mode is just not remembered
 		}
 	}
 

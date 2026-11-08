@@ -173,6 +173,51 @@
 	padding: 1.5rem 3.5rem;
 }
 
+/* Crepe draws its buttons in the outline color, which is our (very light) border color and makes
+   them look disabled. Buttons use the text color, the active ones get a background instead.
+   (doubled class: Crepe's stylesheet is loaded after this one) */
+.crepe-host.crepe-host .milkdown :is(.top-bar-item, .toolbar-item, .operation-item) svg {
+	color: var(--foreground);
+	fill: var(--foreground);
+}
+.crepe-host.crepe-host .milkdown :is(.top-bar-item, .toolbar-item).active {
+	background: var(--accent);
+}
+.crepe-host.crepe-host .milkdown :is(.top-bar-item, .toolbar-item).active svg {
+	color: var(--primary);
+	fill: var(--primary);
+}
+.crepe-host.crepe-host .milkdown .operation-item svg {
+	opacity: 0.6;
+}
+.crepe-host.crepe-host .milkdown .top-bar-heading-button .top-bar-chevron svg {
+	color: var(--muted-foreground);
+	stroke: var(--muted-foreground);
+}
+
+/* on phones the formatting bar wraps, keep it compact so it does not cover half the screen */
+@media (max-width: 640px) {
+	.crepe-host.crepe-host .milkdown .milkdown-top-bar {
+		padding: 0 4px;
+		.top-bar-item {
+			margin: 2px;
+		}
+		.top-bar-divider {
+			margin: 4px;
+		}
+		.top-bar-heading-selector {
+			padding: 2px;
+		}
+	}
+}
+
+/* keep the formatting bar below the sticky page header (h-14) */
+.crepe-host .milkdown .milkdown-top-bar {
+	top: 3.5rem;
+	border-top-left-radius: var(--radius);
+	border-top-right-radius: var(--radius);
+}
+
 @media (max-width: 640px) {
 	.crepe-host .milkdown .ProseMirror {
 		padding: 1rem 1.25rem;
